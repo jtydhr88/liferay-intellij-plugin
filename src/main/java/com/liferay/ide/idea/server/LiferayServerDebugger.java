@@ -15,13 +15,25 @@
 package com.liferay.ide.idea.server;
 
 import com.intellij.debugger.impl.GenericDebuggerRunner;
+import com.intellij.execution.ExecutionException;
+import com.intellij.execution.ExecutionManager;
 import com.intellij.execution.configurations.RunProfile;
+import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.executors.DefaultDebugExecutor;
+import com.intellij.execution.process.ProcessAdapter;
+import com.intellij.execution.process.ProcessEvent;
+import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.ui.RunContentDescriptor;
+import com.intellij.openapi.externalSystem.service.execution.ExternalSystemProcessHandler;
+import com.intellij.openapi.project.Project;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Terry Jia
+ * @author Simon Jiang
  */
 public class LiferayServerDebugger extends GenericDebuggerRunner {
 
@@ -38,6 +50,46 @@ public class LiferayServerDebugger extends GenericDebuggerRunner {
 	@Override
 	public String getRunnerId() {
 		return "LiferayBundleDebugger";
+	}
+
+	@Nullable
+	@Override
+	protected RunContentDescriptor doExecute(@NotNull RunProfileState state, @NotNull ExecutionEnvironment environment)
+		throws ExecutionException {
+
+		RunContentDescriptor descriptor = super.doExecute(state, environment);
+
+		ProcessHandler processHandler = descriptor.getProcessHandler();
+
+		processHandler.addProcessListener(
+			new ProcessAdapter() {
+
+				@Override
+				public void processWillTerminate(@NotNull ProcessEvent event, boolean willBeDestroyed) {
+					Project project = environment.getProject();
+
+					ExecutionManager executionManager = ExecutionManager.getInstance(project);
+
+					ProcessHandler[] runningProcesses = executionManager.getRunningProcesses();
+
+					for (ProcessHandler process : runningProcesses) {
+						if (!process.equals(event.getProcessHandler())) {
+							if (process instanceof ExternalSystemProcessHandler) {
+								ExternalSystemProcessHandler exProcessHandler = (ExternalSystemProcessHandler)process;
+
+								String executionName = exProcessHandler.getExecutionName();
+
+								if (executionName.contains("[watch]")) {
+									process.destroyProcess();
+								}
+							}
+						}
+					}
+				}
+
+			});
+
+		return descriptor;
 	}
 
 }
