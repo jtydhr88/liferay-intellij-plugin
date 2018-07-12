@@ -16,6 +16,7 @@ package com.liferay.ide.idea.ui.actions;
 
 import com.intellij.ide.projectView.impl.ProjectRootsUtil;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 
@@ -28,11 +29,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 
-import java.nio.file.FileVisitResult;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.SimpleFileVisitor;
+import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 
 import java.util.ArrayList;
@@ -41,6 +38,7 @@ import java.util.Properties;
 
 /**
  * @author Terry Jia
+ * @author Simon Jiang
  */
 public class WatchGradleModuleAction extends AbstractLiferayGradleTaskAction {
 
@@ -75,6 +73,17 @@ public class WatchGradleModuleAction extends AbstractLiferayGradleTaskAction {
 		}
 		catch (IOException ioe) {
 		}
+	}
+
+	@Override
+	public void actionPerformed(final AnActionEvent event) {
+
+	    super.actionPerformed(event);
+    }
+
+	@Override
+	protected ProgressExecutionMode getProgressMode(){
+		return ProgressExecutionMode.NO_PROGRESS_ASYNC;
 	}
 
 	@Override
@@ -146,5 +155,4 @@ public class WatchGradleModuleAction extends AbstractLiferayGradleTaskAction {
 
 		return bndFiles;
 	}
-
 }
