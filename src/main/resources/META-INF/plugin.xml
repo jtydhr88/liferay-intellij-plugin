@@ -112,5 +112,6 @@
 		<xml.schemaProvider implementation="com.liferay.ide.idea.language.LiferayXmlSchemaProvider" />
 		<psi.referenceContributor implementation="com.liferay.ide.idea.language.LiferayXmlFileReferenceContributor"/>
 		<completion.contributor order="first" language="JAVA" implementationClass="com.liferay.ide.idea.language.osgi.ComponentPropertiesCompletionContributor"/>
+		<projectViewNodeDecorator implementation="com.liferay.ide.idea.ui.decorator.ProjectViewWatchDecorator"/>
 	</extensions>
 </idea-plugin>

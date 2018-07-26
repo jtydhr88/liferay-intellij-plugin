@@ -14,15 +14,22 @@
 
 package com.liferay.ide.idea.ui.actions;
 
+import com.intellij.execution.ExecutionListener;
+import com.intellij.execution.ExecutionManager;
 import com.intellij.execution.RunManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
+import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.executors.DefaultRunExecutor;
+import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.ide.projectView.ProjectView;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
 import com.intellij.openapi.externalSystem.model.execution.ExternalTaskExecutionInfo;
+import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration;
 import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode;
 import com.intellij.openapi.externalSystem.service.notification.ExternalSystemNotificationManager;
 import com.intellij.openapi.externalSystem.service.notification.NotificationCategory;
@@ -36,17 +43,12 @@ import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.execution.ParametersListUtil;
 
 import com.liferay.ide.idea.util.CoreUtil;
-
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import javax.swing.Icon;
 
 import org.gradle.cli.CommandLineArgumentException;
 import org.gradle.cli.CommandLineParser;
@@ -57,8 +59,15 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.service.execution.cmd.GradleCommandLineOptionsConverter;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
+import javax.swing.*;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 /**
  * @author Andy Wu
+ * @author Simon Jiang
  */
 public abstract class AbstractLiferayGradleTaskAction extends AnAction {
 
@@ -72,7 +81,7 @@ public abstract class AbstractLiferayGradleTaskAction extends AnAction {
 
 	@Override
 	public void actionPerformed(final AnActionEvent event) {
-		Project project = event.getRequiredData(CommonDataKeys.PROJECT);
+		project = event.getRequiredData(CommonDataKeys.PROJECT);
 
 		workingDirectory = getWorkingDirectory(event);
 
@@ -80,13 +89,13 @@ public abstract class AbstractLiferayGradleTaskAction extends AnAction {
 			return;
 		}
 
-		ExternalTaskExecutionInfo taskExecutionInfo = _buildTaskExecutionInfo(project, workingDirectory, _taskName);
+		final ExternalTaskExecutionInfo taskExecutionInfo = _buildTaskExecutionInfo(project, workingDirectory, _taskName);
 
 		if (taskExecutionInfo == null) {
 			return;
 		}
 
-		ExternalSystemUtil.runTask(
+        ExternalSystemUtil.runTask(
 			taskExecutionInfo.getSettings(), taskExecutionInfo.getExecutorId(), project, GradleConstants.SYSTEM_ID,
 			new TaskCallback() {
 
@@ -99,8 +108,8 @@ public abstract class AbstractLiferayGradleTaskAction extends AnAction {
 					afterTask();
 				}
 
-			},
-			ProgressExecutionMode.IN_BACKGROUND_ASYNC);
+			}, getProgressMode(),true);
+
 
 		RunnerAndConfigurationSettings configuration =
 			ExternalSystemUtil.createExternalSystemRunnerAndConfigurationSettings(
@@ -121,6 +130,52 @@ public abstract class AbstractLiferayGradleTaskAction extends AnAction {
 		else {
 			runManager.setSelectedConfiguration(existingConfiguration);
 		}
+
+        project.getMessageBus().connect(Disposer.newDisposable()).subscribe(ExecutionManager.EXECUTION_TOPIC, new ExecutionListener() {
+
+			public void processStarted(@NotNull final String executorIdLocal,
+									   @NotNull final ExecutionEnvironment environmentLocal,
+									   @NotNull final ProcessHandler handler) {
+				if (!checkProcess(taskExecutionInfo, executorIdLocal, environmentLocal)) {
+					return;
+				}
+				handleProcessStarted(handler);
+
+			}
+
+			public void  processTerminated(
+					@NotNull String executorIdLocal, @NotNull ExecutionEnvironment environmentLocal, @NotNull ProcessHandler handler, int exitCode) {
+
+				if (!checkProcess(taskExecutionInfo, executorIdLocal, environmentLocal)) {
+					return;
+				}
+				handleProcessTerminated(handler);
+			}
+		});
+    }
+
+    protected boolean checkProcess(ExternalTaskExecutionInfo taskExecutionInfo,
+								   @NotNull final String executorIdLocal,
+								   @NotNull final ExecutionEnvironment environmentLocal){
+		RunnerAndConfigurationSettings runnerSettings = environmentLocal.getRunnerAndConfigurationSettings();
+		RunConfiguration configuration = runnerSettings.getConfiguration();
+
+		if ( configuration instanceof  ExternalSystemRunConfiguration){
+			ExternalSystemRunConfiguration runnerExternalSystemRunConfiguration = (ExternalSystemRunConfiguration)runnerSettings.getConfiguration();
+			ExternalSystemTaskExecutionSettings runningTaskSettings = runnerExternalSystemRunConfiguration.getSettings();
+
+			ExternalSystemTaskExecutionSettings taskRunnerSettings = taskExecutionInfo.getSettings();
+
+			if ( taskRunnerSettings.getExternalProjectPath().equals(runningTaskSettings.getExternalProjectPath()) &&
+					taskRunnerSettings.getTaskNames().equals(runningTaskSettings.getTaskNames()) &&
+					taskRunnerSettings.getExternalSystemId().equals(runningTaskSettings.getExternalSystemId()) &&
+					taskExecutionInfo.getExecutorId().equals(executorIdLocal)){
+
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	public void afterTask() {
@@ -174,6 +229,23 @@ public abstract class AbstractLiferayGradleTaskAction extends AnAction {
 	}
 
 	protected String workingDirectory;
+
+	protected ProgressExecutionMode getProgressMode(){
+		return ProgressExecutionMode.IN_BACKGROUND_ASYNC;
+	}
+
+	protected void handleProcessTerminated(@NotNull ProcessHandler handler){
+		refreshProjectView();
+	}
+
+	protected void handleProcessStarted(@NotNull ProcessHandler handler){
+		refreshProjectView();
+	}
+
+	private void refreshProjectView(){
+		ProjectView projectView = ProjectView.getInstance(project);
+		projectView.refresh();
+	}
 
 	private ExternalTaskExecutionInfo _buildTaskExecutionInfo(
 		Project project, @NotNull String projectPath, @NotNull String fullCommandLine) {
@@ -240,5 +312,5 @@ public abstract class AbstractLiferayGradleTaskAction extends AnAction {
 	}
 
 	private final String _taskName;
-
+	protected Project project;
 }
