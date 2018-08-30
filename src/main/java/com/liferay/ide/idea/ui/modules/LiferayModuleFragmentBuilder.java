@@ -112,9 +112,15 @@ public class LiferayModuleFragmentBuilder extends ModuleBuilder {
 		SwitchConsumerBuilder<File> switch_ = SwitchConsumer.newBuilder();
 
 		SwitchConsumer<File> switchConsumer = switch_.addCase(
-			f -> f.getName().equals("portlet.properties"), f -> _copyPortletExtProperties(projectRoot, f)
+			f -> "portlet.properties".equals(f.getName()), f -> _copyPortletExtProperties(projectRoot, f)
 		).addCase(
-			f -> f.getName().contains("default.xml"), f -> _createDefaultExtXmlFile(projectRoot, f)
+			f -> {
+				String name = f.getName();
+
+				return name.contains("default.xml");
+			},
+
+			f -> _createDefaultExtXmlFile(projectRoot, f)
 		).setDefault(
 			f -> _copyOtherResource(projectRoot, f)
 		).build();

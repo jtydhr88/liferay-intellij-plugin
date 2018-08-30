@@ -282,7 +282,11 @@ public class LiferayProjectTypeStep extends ModuleWizardStep implements Settings
 		).filter(
 			builder -> builder instanceof LiferayModuleBuilder
 		).forEach(
-			builder -> _wizard.getSequence().addStepsForBuilder(builder, context, modulesProvider)
+			builder -> {
+				StepSequence sequence = _wizard.getSequence();
+
+				sequence.addStepsForBuilder(builder, context, modulesProvider);
+			}
 		);
 
 		PropertiesComponent propertiesComponent = PropertiesComponent.getInstance();
@@ -434,7 +438,12 @@ public class LiferayProjectTypeStep extends ModuleWizardStep implements Settings
 				Stream<FrameworkSupportInModuleProvider> stream = filtered.stream();
 
 				Set<FrameworkSupportInModuleProvider> set = stream.flatMap(
-					provider -> provider.getDependenciesFrameworkIds().stream()
+					provider -> {
+						List<FrameworkSupportInModuleProvider.FrameworkDependency> dependenciesFrameworkIds =
+							provider.getDependenciesFrameworkIds();
+
+						return dependenciesFrameworkIds.stream();
+					}
 				).map(
 					depId -> map.get(depId.getFrameworkId())
 				).filter(
