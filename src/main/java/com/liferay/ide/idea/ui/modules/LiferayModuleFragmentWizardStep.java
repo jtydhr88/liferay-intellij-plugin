@@ -16,6 +16,7 @@ package com.liferay.ide.idea.ui.modules;
 
 import static java.util.Collections.list;
 
+import aQute.bnd.header.Attrs;
 import aQute.bnd.osgi.Domain;
 
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
@@ -39,6 +40,7 @@ import java.io.IOException;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.stream.Stream;
@@ -172,7 +174,10 @@ public class LiferayModuleFragmentWizardStep extends ModuleWizardStep {
 	public void updateDataModel() {
 		Domain domain = _getBsnAndVersion(getFragmentHost());
 
-		_builder.setBsnName(domain.getBundleSymbolicName().getKey());
+		Map.Entry<String, Attrs> bundleSymbolicName = domain.getBundleSymbolicName();
+
+		_builder.setBsnName(bundleSymbolicName.getKey());
+
 		_builder.setVersion(domain.getBundleVersion());
 
 		_builder.setFragmentHost(getFragmentHost());

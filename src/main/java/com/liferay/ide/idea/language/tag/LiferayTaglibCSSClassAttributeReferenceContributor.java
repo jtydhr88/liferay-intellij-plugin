@@ -180,8 +180,8 @@ public class LiferayTaglibCSSClassAttributeReferenceContributor extends PsiRefer
 
 					Stream<SimpleImmutableEntry<String, String>> attributesStream = attributes.stream();
 
-					if (attributesStream.anyMatch(attribute -> attribute.getKey().equals(xmlTagLocalName) &&
-						 attribute.getValue().equals(xmlAttributeLocalName))) {
+					if (attributesStream.anyMatch(attribute -> xmlTagLocalName.equals(attribute.getKey()) &&
+						 xmlAttributeLocalName.equals(attribute.getValue()))) {
 
 						return true;
 					}

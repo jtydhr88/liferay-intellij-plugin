@@ -177,8 +177,8 @@ public class LiferayTaglibResourceBundleReferenceContributor extends PsiReferenc
 
 						Stream<SimpleImmutableEntry<String, String>> stream = entries.stream();
 
-						if (stream.anyMatch(entry -> entry.getKey().equals(tagLocalName) &&
-							 entry.getValue().equals(attributeLocalName))) {
+						if (stream.anyMatch(entry -> tagLocalName.equals(entry.getKey()) &&
+							 attributeLocalName.equals(entry.getValue()))) {
 
 							return true;
 						}
