@@ -139,4 +139,9 @@
 		<projectViewNodeDecorator implementation="com.liferay.ide.idea.ui.decorator.ProjectViewWatchDecorator"/>
 		<implicitUsageProvider order="last" implementation="com.liferay.ide.idea.language.osgi.LiferayOsgiImplicitUsageProvider" />
 	</extensions>
+
+	<extensions defaultExtensionNs="org.jetbrains.idea.maven">
+		<importer implementation="com.liferay.ide.idea.language.maven.LiferayBundleSupportMavenImporter" />
+	</extensions>
+
 </idea-plugin>
