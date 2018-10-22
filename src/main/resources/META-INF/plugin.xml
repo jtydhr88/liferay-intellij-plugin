@@ -144,4 +144,9 @@
 		<importer implementation="com.liferay.ide.idea.language.maven.LiferayBundleSupportMavenImporter" />
 	</extensions>
 
+	<extensions defaultExtensionNs="org.jetbrains.plugins.gradle">
+		<projectResolve implementation="com.liferay.ide.idea.language.gradle.LiferayWorkspaceGradleProjectResolver" />
+	</extensions>
+
+
 </idea-plugin>

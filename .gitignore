@@ -9,3 +9,4 @@ build/
 *.iml
 out/
 /bin/
+!/src/main/java/com/liferay/ide/idea/language/gradle
