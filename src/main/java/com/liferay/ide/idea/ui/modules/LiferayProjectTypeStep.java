@@ -65,6 +65,7 @@ import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.UIUtil;
 
+import com.liferay.ide.idea.ui.modules.ext.LiferayModuleExtBuilder;
 import com.liferay.ide.idea.util.CoreUtil;
 
 import gnu.trove.THashMap;
@@ -554,9 +555,7 @@ public class LiferayProjectTypeStep extends ModuleWizardStep implements Settings
 
 	private List<TemplatesGroup> _fillTemplatesMap() {
 		_templatesMap.put(new TemplatesGroup(new LiferayModuleBuilder()), new ArrayList<>());
-
-		// disable the fragment wizard for right now and we will add the Module Ext wizard back smailiar as it back
-		// _templatesMap.put(new TemplatesGroup(new LiferayModuleFragmentBuilder()), new ArrayList<>());
+		_templatesMap.put(new TemplatesGroup(new LiferayModuleExtBuilder()), new ArrayList<>());
 
 		List<TemplatesGroup> groups = new ArrayList<>(_templatesMap.keySet());
 

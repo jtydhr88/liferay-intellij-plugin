@@ -18,22 +18,40 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 
+import com.liferay.ide.idea.core.Artifact;
+
 import java.io.File;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.gradle.tooling.GradleConnectionException;
+import org.gradle.tooling.GradleConnector;
+import org.gradle.tooling.ProjectConnection;
+import org.gradle.tooling.model.DomainObjectSet;
+import org.gradle.tooling.model.GradleModuleVersion;
+import org.gradle.tooling.model.eclipse.EclipseExternalDependency;
+import org.gradle.tooling.model.eclipse.EclipseProject;
+
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.MavenPlugin;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.MavenUtil;
+import org.jetbrains.plugins.gradle.settings.GradleExtensionsSettings;
 
 /**
  * @author Terry Jia
  * @author Simon Jiang
  */
 public class LiferayWorkspaceUtil {
+
+	public static List<Artifact> targetPlatformArtifacts = Collections.emptyList();
 
 	public static String getHomeDir(String location) {
 		String result = _getGradleProperty(location, "liferay.workspace.home.dir", "bundles");
@@ -43,6 +61,82 @@ public class LiferayWorkspaceUtil {
 		}
 
 		return result;
+	}
+
+	@NotNull
+	public static String getModuleExtDir(Project project) {
+		String retval = null;
+
+		if (project != null) {
+			String projectLocation = project.getBasePath();
+
+			if (projectLocation != null) {
+				retval = _getGradleProperty(
+					projectLocation, WorkspaceConstants.DEFAULT_EXT_DIR_PROPERTY, WorkspaceConstants.DEFAULT_EXT_DIR);
+			}
+		}
+
+		if (CoreUtil.isNullOrEmpty(retval)) {
+			return WorkspaceConstants.DEFAULT_EXT_DIR;
+		}
+
+		return retval;
+	}
+
+	/**
+	 * @param reload reconnect with Gradle to get newest value
+	 */
+	public static List<Artifact> getTargetPlatformArtifacts(Project project, boolean reload) {
+		if (targetPlatformResolved(project) && reload) {
+			GradleConnector connector = GradleConnector.newConnector();
+
+			connector.forProjectDirectory(getWorkspaceLocation(project));
+
+			ProjectConnection connection = connector.connect();
+
+			try {
+				EclipseProject eclipseProject = connection.getModel(EclipseProject.class);
+
+				DomainObjectSet<? extends EclipseExternalDependency> dependencies = eclipseProject.getClasspath();
+
+				targetPlatformArtifacts = new ArrayList<>(dependencies.size());
+
+				for (EclipseExternalDependency dependency : dependencies) {
+					GradleModuleVersion moduleVersion = dependency.getGradleModuleVersion();
+
+					if (moduleVersion != null) {
+						targetPlatformArtifacts.add(
+							new Artifact(
+								moduleVersion.getGroup(), moduleVersion.getName(), moduleVersion.getVersion(),
+								dependency.getSource()));
+					}
+				}
+			}
+			catch (GradleConnectionException gce) {
+			}
+			finally {
+				connection.close();
+			}
+		}
+
+		return targetPlatformArtifacts;
+	}
+
+	@Nullable
+	public static String getTargetPlatformVersion(Project project) {
+		String location = project.getBasePath();
+
+		return _getGradleProperty(location, WorkspaceConstants.DEFAULT_TARGET_PLATFORM_VERSION_PROPERTY, null);
+	}
+
+	public static File getWorkspaceLocation(Project project) {
+		VirtualFile baseDir = project.getBaseDir();
+
+		return new File(baseDir.getPath());
+	}
+
+	public static String getWorkspaceLocationPath(Project project) {
+		return getWorkspaceLocation(project).getPath();
 	}
 
 	public static boolean isValidGradleWorkspaceLocation(String location) {
@@ -110,6 +204,33 @@ public class LiferayWorkspaceUtil {
 			(isValidGradleWorkspaceLocation(project.getBasePath()) || isValidMavenWorkspaceLocation(project))) {
 
 			return true;
+		}
+
+		return false;
+	}
+
+	/**
+	 * @return current project that contains target platform configuration
+	 *          was resolved by Gradle plugin or not.
+	 */
+	public static boolean targetPlatformResolved(Project project) {
+		if (getTargetPlatformVersion(project) == null) {
+			return false;
+		}
+
+		GradleExtensionsSettings.Settings settings = GradleExtensionsSettings.getInstance(project);
+
+		GradleExtensionsSettings.GradleExtensionsData gradleExtensionsData = settings.getExtensionsFor(
+			project.getBasePath(), project.getBasePath());
+
+		if (gradleExtensionsData == null) {
+			return false;
+		}
+
+		for (GradleExtensionsSettings.GradleConfiguration configuration : gradleExtensionsData.configurations) {
+			if ("targetPlatformBoms".equals(configuration.name)) {
+				return true;
+			}
 		}
 
 		return false;
