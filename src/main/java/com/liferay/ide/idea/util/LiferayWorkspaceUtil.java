@@ -24,6 +24,8 @@ import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.MavenPlugin;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
@@ -43,6 +45,43 @@ public class LiferayWorkspaceUtil {
 		}
 
 		return result;
+	}
+
+	@NotNull
+	public static String getModuleExtDir(Project project) {
+		String retval = null;
+
+		if (project != null) {
+			String projectLocation = project.getBasePath();
+
+			if (projectLocation != null) {
+				retval = _getGradleProperty(
+					projectLocation, WorkspaceConstants.DEFAULT_EXT_DIR_PROPERTY, WorkspaceConstants.DEFAULT_EXT_DIR);
+			}
+		}
+
+		if (CoreUtil.isNullOrEmpty(retval)) {
+			return WorkspaceConstants.DEFAULT_EXT_DIR;
+		}
+
+		return retval;
+	}
+
+	@Nullable
+	public static String getTargetPlatformVersion(Project project) {
+		String location = project.getBasePath();
+
+		return _getGradleProperty(location, WorkspaceConstants.DEFAULT_TARGET_PLATFORM_VERSION_PROPERTY, null);
+	}
+
+	public static File getWorkspaceLocation(Project project) {
+		VirtualFile baseDir = project.getBaseDir();
+
+		return new File(baseDir.getPath());
+	}
+
+	public static String getWorkspaceLocationPath(Project project) {
+		return getWorkspaceLocation(project).getPath();
 	}
 
 	public static boolean isValidGradleWorkspaceLocation(String location) {
