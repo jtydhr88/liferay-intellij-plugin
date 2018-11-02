@@ -14,15 +14,19 @@
 
 package com.liferay.ide.idea.ui.actions;
 
+import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import icons.LiferayIcons;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * @author Andy Wu
+ * @author Simon Jiang
  */
 public class InitBundleGradleAction extends AbstractLiferayGradleTaskAction {
 
@@ -46,10 +50,11 @@ public class InitBundleGradleAction extends AbstractLiferayGradleTaskAction {
 	}
 
 	@Override
-	protected String getWorkingDirectory(AnActionEvent event) {
-		Project project = event.getRequiredData(CommonDataKeys.PROJECT);
+	protected void handleProcessTerminated(
+		@NotNull final String executorIdLocal, @NotNull final ExecutionEnvironment environmentLocal,
+		@NotNull ProcessHandler handler) {
 
-		return project.getBasePath();
+		excludeLiferayWorkspaceBundlesFolder();
 	}
 
 }
