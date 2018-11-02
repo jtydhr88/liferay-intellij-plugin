@@ -139,4 +139,8 @@
 		<projectViewNodeDecorator implementation="com.liferay.ide.idea.ui.decorator.ProjectViewWatchDecorator"/>
 		<implicitUsageProvider order="last" implementation="com.liferay.ide.idea.language.osgi.LiferayOsgiImplicitUsageProvider" />
 	</extensions>
+
+	<extensions defaultExtensionNs="org.jetbrains.plugins.gradle">
+		<projectResolve implementation="com.liferay.ide.idea.extensions.LiferayGradleProjectResolverExtension"/>
+	</extensions>
 </idea-plugin>
