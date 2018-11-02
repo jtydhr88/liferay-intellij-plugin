@@ -116,6 +116,14 @@ public class FileUtil {
 		return false;
 	}
 
+	public static boolean notExists(VirtualFile file) {
+		if ((file == null) || !file.exists()) {
+			return true;
+		}
+
+		return false;
+	}
+
 	public static Path pathAppend(Path path, String child) {
 		Path newPath = Paths.get(path.toString(), child);
 
