@@ -36,6 +36,8 @@
 			<li>1.2.0</li>
 			<ul>
 				<li>add support for Liferay Target Platform in new Liferay Workspace wizard</li>
+				<li>add new module ext wizard</li>
+				<li>more OSGi component properties support</li>
 			</ul>
 			<li>1.1.1</li>
 			<ul>
