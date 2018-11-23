@@ -3,29 +3,21 @@
   <grid id="27dc6" binding="_mainPanel" layout-manager="GridLayoutManager" row-count="4" column-count="3" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
     <margin top="0" left="0" bottom="0" right="0"/>
     <constraints>
-      <xy x="20" y="20" width="642" height="400"/>
+      <xy x="20" y="20" width="642" height="465"/>
     </constraints>
     <properties/>
     <border type="none"/>
     <children>
-      <grid id="d872d" layout-manager="CardLayout" hgap="0" vgap="0">
-        <constraints>
-          <grid row="3" column="0" row-span="1" col-span="2" vsize-policy="7" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
-        </constraints>
-        <properties/>
-        <border type="none"/>
-        <children/>
-      </grid>
       <component id="58004" class="javax.swing.JLabel">
         <constraints>
           <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <labelFor value="7f323"/>
+          <labelFor value="66b4"/>
           <text value="Original Module Name:"/>
         </properties>
       </component>
-      <component id="7f323" class="javax.swing.JComboBox" binding="_originalModuleName">
+      <component id="66b4" class="javax.swing.JComboBox" binding="_originalModuleName">
         <constraints>
           <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="2" anchor="8" fill="1" indent="0" use-parent-layout="false"/>
         </constraints>
@@ -61,6 +53,7 @@
         <properties>
           <enabled value="true"/>
           <text value=""/>
+          <toolTipText resource-bundle="messages/LiferayBundle" key="modules.ext.refresh.tip"/>
         </properties>
       </component>
       <component id="c2684" class="javax.swing.JLabel" binding="_moduleNameHint">
@@ -72,6 +65,11 @@
           <text value="Tip: Bundle Symbolic Name"/>
         </properties>
       </component>
+      <nested-form id="5a0d1" form-file="com/liferay/ide/idea/ui/modules/ext/OverrideFilesComponent.form" binding="_overrideFilesPanel">
+        <constraints>
+          <grid row="3" column="0" row-span="1" col-span="3" vsize-policy="7" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+        </constraints>
+      </nested-form>
     </children>
   </grid>
 </form>

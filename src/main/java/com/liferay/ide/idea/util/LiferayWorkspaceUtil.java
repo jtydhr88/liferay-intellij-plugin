@@ -68,6 +68,21 @@ public class LiferayWorkspaceUtil {
 	}
 
 	@Nullable
+	public static VirtualFile getModuleExtFile(Project project) {
+		String moduleExtDir = getModuleExtDir(project);
+
+		File file = new File(moduleExtDir);
+
+		if (!file.isAbsolute()) {
+			file = new File(getWorkspaceLocation(project), moduleExtDir);
+		}
+
+		LocalFileSystem fileSystem = LocalFileSystem.getInstance();
+
+		return fileSystem.findFileByPath(file.getPath());
+	}
+
+	@Nullable
 	public static String getTargetPlatformVersion(Project project) {
 		String location = project.getBasePath();
 
