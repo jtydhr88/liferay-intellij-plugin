@@ -14,12 +14,13 @@
 
 package com.liferay.ide.idea.server;
 
+import static com.intellij.execution.util.JavaParametersUtil.createProjectJdk;
+
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.application.BaseJavaApplicationCommandLineState;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.ParametersList;
 import com.intellij.execution.runners.ExecutionEnvironment;
-import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.util.PathsList;
 
 import com.liferay.ide.idea.server.portal.PortalBundle;
@@ -65,7 +66,7 @@ public class LiferayServerCommandLineState extends BaseJavaApplicationCommandLin
 			jrePath = liferayServerConfiguration.getAlternativeJrePath();
 		}
 
-		javaParameters.setJdk(JavaParametersUtil.createProjectJdk(liferayServerConfiguration.getProject(), jrePath));
+		javaParameters.setJdk(createProjectJdk(liferayServerConfiguration.getProject(), jrePath));
 
 		String bundleLocation = liferayServerConfiguration.getBundleLocation();
 
@@ -106,7 +107,8 @@ public class LiferayServerCommandLineState extends BaseJavaApplicationCommandLin
 
 		ParametersList vmParametersList = javaParameters.getVMParametersList();
 
-		String[] runtimeStartVMArgs = portalBundle.getRuntimeStartVMArgs();
+		String[] runtimeStartVMArgs = portalBundle.getRuntimeStartVMArgs(
+			createProjectJdk(liferayServerConfiguration.getProject(), jrePath));
 
 		Stream.of(
 			runtimeStartVMArgs
