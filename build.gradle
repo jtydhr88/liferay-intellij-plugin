@@ -2,7 +2,6 @@ buildscript {
 	dependencies {
 		classpath group: "com.gradle", name: "build-scan-plugin", version: "1.16"
 		classpath group: "com.liferay", name: "com.liferay.gradle.plugins.source.formatter", version: "latest.release"
-		classpath group: "nu.studer", name: "gradle-credentials-plugin", version: "1.0.4"
 	}
 
 	repositories {
@@ -23,7 +22,6 @@ plugins {
 apply plugin: "com.gradle.build-scan"
 apply plugin: "com.liferay.source.formatter"
 apply plugin: "java"
-apply plugin: "nu.studer.credentials"
 
 task downloadBlade(type: Download)
 task downloadDtds(type: Download)
@@ -143,7 +141,7 @@ processResources {
 	dependsOn verifyBlade
 }
 
-def intellijPortalToken = credentials.intellijPortalToken ?: ""
+def intellijPortalToken = project.hasProperty("intellijPortalToken") ? project.property("intellijPortalToken") : ""
 
 publishPlugin {
 	token intellijPortalToken
