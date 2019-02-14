@@ -94,7 +94,6 @@ class AnonymousFeedback {
 			boolean newIssue = true;
 
 			if (duplicate != null) {
-				issueService.createComment(repoID, duplicate.getNumber(), _generateGitHubIssueBody(environmentDetails, false));
 				newGitHubIssue = duplicate;
 				newIssue = false;
 			}
@@ -174,7 +173,7 @@ class AnonymousFeedback {
 	private static Issue _findFirstDuplicate(String uniqueTitle, final IssueService service, RepositoryId repo) {
 		Map<String, String> searchParameters = new HashMap<>(2);
 
-		searchParameters.put(IssueService.FILTER_STATE, IssueService.STATE_OPEN);
+		searchParameters.put(IssueService.FILTER_STATE, "all");
 
 		final PageIterator<Issue> pages = service.pageIssues(repo, searchParameters);
 
