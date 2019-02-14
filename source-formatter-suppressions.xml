@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+
+<suppressions>
+	<checkstyle>
+		<suppress checks="MissingModifierCheck" files="com/liferay/ide/idea/errorreport/.*" />
+	</checkstyle>
+	<source-check>
+		<suppress checks="CopyrightCheck" files="com/liferay/ide/idea/errorreport/.*" />
+		<suppress checks="JavaDeserializationSecurityCheck" files="com/liferay/ide/idea/errorreport/GitHubAccessTokenScrambler.java" />
+	</source-check>
+</suppressions>
