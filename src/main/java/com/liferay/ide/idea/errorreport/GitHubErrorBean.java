@@ -31,15 +31,18 @@ import java.util.Arrays;
  */
 class GitHubErrorBean extends ErrorBean {
 
-  private String myExceptionHash;
+	private String _exceptionHash;
 
-  GitHubErrorBean(Throwable throwable, String lastAction) {
-    super(throwable, lastAction);
-    final int hashCode = Arrays.hashCode(throwable.getStackTrace());
-    myExceptionHash = String.valueOf(hashCode);
-  }
+	GitHubErrorBean(Throwable throwable, String lastAction) {
+		super(throwable, lastAction);
 
-  String getExceptionHash() {
-    return myExceptionHash;
-  }
+		final int hashCode = Arrays.hashCode(throwable.getStackTrace());
+
+		_exceptionHash = String.valueOf(hashCode);
+	}
+
+	String _getExceptionHash() {
+		return _exceptionHash;
+	}
+
 }

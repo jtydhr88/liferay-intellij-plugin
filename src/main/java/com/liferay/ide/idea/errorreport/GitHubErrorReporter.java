@@ -28,13 +28,12 @@ import com.intellij.diagnostic.ReportMessages;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.idea.IdeaLogger;
+import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationInfo;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.ErrorReportSubmitter;
@@ -46,11 +45,14 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
-import com.liferay.ide.idea.core.MessagesBundle;
-import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import com.liferay.ide.idea.core.MessagesBundle;
+
+import java.awt.Component;
+
 import java.util.LinkedHashMap;
+
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Provides error reporting functionality for the plugin. When a user experiences an exception thrown by the plugin,
@@ -61,24 +63,36 @@ import java.util.LinkedHashMap;
  */
 public class GitHubErrorReporter extends ErrorReportSubmitter {
 
+	@NotNull
 	@Override
-	public boolean submit(@NotNull IdeaLoggingEvent[] events, String additionalInfo, @NotNull Component parentComponent, @NotNull Consumer<SubmittedReportInfo> consumer) {
-		GitHubErrorBean errorBean = new GitHubErrorBean(events[0].getThrowable(), IdeaLogger.ourLastActionId);
-		return doSubmit(events[0], parentComponent, consumer, errorBean, additionalInfo);
+	public String getReportActionText() {
+		return MessagesBundle.message("report.error.to.plugin.vendor");
 	}
 
-	private static boolean doSubmit(final IdeaLoggingEvent event,
-									final Component parentComponent,
-									final Consumer<SubmittedReportInfo> callback,
-									final GitHubErrorBean bean,
-									final String description) {
-		final DataContext dataContext = DataManager.getInstance().getDataContext(parentComponent);
+	@Override
+	public boolean submit(
+		@NotNull IdeaLoggingEvent[] events, String additionalInfo, @NotNull Component parentComponent,
+		@NotNull Consumer<SubmittedReportInfo> consumer) {
+
+		GitHubErrorBean errorBean = new GitHubErrorBean(events[0].getThrowable(), IdeaLogger.ourLastActionId);
+
+		return _doSubmit(events[0], parentComponent, consumer, errorBean, additionalInfo);
+	}
+
+	private static boolean _doSubmit(
+		final IdeaLoggingEvent event, final Component parentComponent, final Consumer<SubmittedReportInfo> callback,
+		final GitHubErrorBean bean, final String description) {
+
+		DataManager dataManager = DataManager.getInstance();
+
+		final DataContext dataContext = dataManager.getDataContext(parentComponent);
 
 		bean.setDescription(description);
 		bean.setMessage(event.getMessage());
 
 		if (event instanceof IdeaReportingEvent) {
-			final IdeaPluginDescriptor plugin = ((IdeaReportingEvent) event).getPlugin();
+			final IdeaPluginDescriptor plugin = ((IdeaReportingEvent)event).getPlugin();
+
 			if (plugin != null) {
 				bean.setPluginName(plugin.getName());
 				bean.setPluginVersion(plugin.getVersion());
@@ -86,34 +100,32 @@ public class GitHubErrorReporter extends ErrorReportSubmitter {
 		}
 
 		Object data = event.getData();
+
 		if (data instanceof LogMessage) {
-			bean.setAttachments(ContainerUtil.filter(((LogMessage) data).getAllAttachments(), Attachment::isIncluded));
+			bean.setAttachments(ContainerUtil.filter(((LogMessage)data).getAllAttachments(), Attachment::isIncluded));
 		}
 
-		LinkedHashMap<String, String> reportValues = IdeaInformationProxy
-			.getKeyValuePairs(bean,
-				ApplicationManager.getApplication(),
-				(ApplicationInfoEx) ApplicationInfo.getInstance(),
-				ApplicationNamesInfo.getInstance());
+		LinkedHashMap<String, String> reportValues = IdeaInformationProxy._getKeyValuePairs(
+			bean, (ApplicationInfoEx)ApplicationInfo.getInstance());
 
 		final Project project = CommonDataKeys.PROJECT.getData(dataContext);
 
 		final CallbackWithNotification notifyingCallback = new CallbackWithNotification(callback, project);
-		AnonymousFeedbackTask task =
-			new AnonymousFeedbackTask(project, MessagesBundle.message("report.error.progress.dialog.text"), true, reportValues, notifyingCallback);
+
+		AnonymousFeedbackTask task = new AnonymousFeedbackTask(
+			project, MessagesBundle.message("report.error.progress.dialog.text"), true, reportValues,
+			notifyingCallback);
+
 		if (project == null) {
 			task.run(new EmptyProgressIndicator());
 		}
 		else {
-			ProgressManager.getInstance().run(task);
-		}
-		return true;
-	}
+			ProgressManager progressManager = ProgressManager.getInstance();
 
-	@NotNull
-	@Override
-	public String getReportActionText() {
-		return MessagesBundle.message("report.error.to.plugin.vendor");
+			progressManager.run(task);
+		}
+
+		return true;
 	}
 
 	/**
@@ -121,33 +133,35 @@ public class GitHubErrorReporter extends ErrorReportSubmitter {
 	 */
 	static class CallbackWithNotification implements Consumer<SubmittedReportInfo> {
 
-		private final Consumer<SubmittedReportInfo> myOriginalConsumer;
-		private final Project myProject;
-
-		CallbackWithNotification(Consumer<SubmittedReportInfo> originalConsumer, Project project) {
-			this.myOriginalConsumer = originalConsumer;
-			this.myProject = project;
-		}
-
 		@Override
 		public void consume(SubmittedReportInfo reportInfo) {
-			myOriginalConsumer.consume(reportInfo);
+			_consumer.consume(reportInfo);
 
-			if (reportInfo.getStatus().equals(SubmissionStatus.FAILED)) {
-				ReportMessages.GROUP.createNotification(
-					ReportMessages.ERROR_REPORT,
-					reportInfo.getLinkText(),
-					NotificationType.ERROR,
-					null).setImportant(false).notify(myProject);
+			Notification notification;
+
+			if (SubmissionStatus.FAILED.equals(reportInfo.getStatus())) {
+				notification = ReportMessages.GROUP.createNotification(
+					ReportMessages.ERROR_REPORT, reportInfo.getLinkText(), NotificationType.ERROR, null);
 			}
 			else {
-				ReportMessages.GROUP.createNotification(
-					ReportMessages.ERROR_REPORT,
-					reportInfo.getLinkText(),
-					NotificationType.INFORMATION,
-					NotificationListener.URL_OPENING_LISTENER).setImportant(false).notify(myProject);
+				notification = ReportMessages.GROUP.createNotification(
+					ReportMessages.ERROR_REPORT, reportInfo.getLinkText(), NotificationType.INFORMATION,
+					NotificationListener.URL_OPENING_LISTENER);
 			}
 
+			notification.setImportant(false);
+			notification.notify(_project);
 		}
+
+		private final Consumer<SubmittedReportInfo> _consumer;
+
+		CallbackWithNotification(Consumer<SubmittedReportInfo> originalConsumer, Project project) {
+			_consumer = originalConsumer;
+			_project = project;
+		}
+
+		private final Project _project;
+
 	}
+
 }

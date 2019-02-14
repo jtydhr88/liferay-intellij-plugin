@@ -21,14 +21,19 @@
 
 package com.liferay.ide.idea.errorreport;
 
-import org.apache.commons.codec.binary.Base64;
+import java.io.FileOutputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+
+import java.net.URL;
+
+import java.nio.charset.StandardCharsets;
 
 import javax.crypto.Cipher;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
-import java.io.*;
-import java.net.URL;
-import java.nio.charset.StandardCharsets;
+
+import org.apache.commons.codec.binary.Base64;
 
 /**
  * Provides functionality to encode and decode secret tokens to make them not directly readable. Let me be clear:
@@ -38,18 +43,18 @@ import java.nio.charset.StandardCharsets;
  */
 public class GitHubAccessTokenScrambler {
 
-	private static final String myInitVector = "RandomInitVector";
-	private static final String myKey = "GitHubErrorToken";
-
 	public static void main(String[] args) {
 		if (args.length != 2) {
 			return;
 		}
+
 		String horse = args[0];
 		String outputFile = args[1];
+
 		try {
-			final String e = encrypt(horse);
+			final String e = _encrypt(horse);
 			final ObjectOutputStream o = new ObjectOutputStream(new FileOutputStream(outputFile));
+
 			o.writeObject(e);
 			o.close();
 		}
@@ -58,34 +63,46 @@ public class GitHubAccessTokenScrambler {
 		}
 	}
 
-	private static String encrypt(String value) {
+	private static String _encrypt(String value) {
 		try {
-			IvParameterSpec iv = new IvParameterSpec(myInitVector.getBytes(StandardCharsets.UTF_8));
-			SecretKeySpec keySpec = new SecretKeySpec(myKey.getBytes(StandardCharsets.UTF_8), "AES");
+			IvParameterSpec iv = new IvParameterSpec(_INIT_VECTOR.getBytes(StandardCharsets.UTF_8));
+			SecretKeySpec keySpec = new SecretKeySpec(_TOKEN.getBytes(StandardCharsets.UTF_8), "AES");
 
 			Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5PADDING");
+
 			cipher.init(Cipher.ENCRYPT_MODE, keySpec, iv);
 
 			byte[] encrypted = cipher.doFinal(value.getBytes());
+
 			return Base64.encodeBase64String(encrypted);
 		}
 		catch (Exception ex) {
 			ex.printStackTrace();
 		}
+
 		return null;
 	}
 
-	static String decrypt(URL file) throws Exception {
+	private static final String _INIT_VECTOR = "RandomInitVector";
+
+	private static final String _TOKEN = "GitHubErrorToken";
+
+	static String _decrypt(URL file) throws Exception {
 		String in;
 		final ObjectInputStream o = new ObjectInputStream(file.openStream());
-		in = (String) o.readObject();
-		IvParameterSpec iv = new IvParameterSpec(myInitVector.getBytes(StandardCharsets.UTF_8));
-		SecretKeySpec keySpec = new SecretKeySpec(myKey.getBytes(StandardCharsets.UTF_8), "AES");
+
+		in = (String)o.readObject();
+
+		IvParameterSpec iv = new IvParameterSpec(_INIT_VECTOR.getBytes(StandardCharsets.UTF_8));
+		SecretKeySpec keySpec = new SecretKeySpec(_TOKEN.getBytes(StandardCharsets.UTF_8), "AES");
 
 		Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5PADDING");
+
 		cipher.init(Cipher.DECRYPT_MODE, keySpec, iv);
 
 		byte[] original = cipher.doFinal(Base64.decodeBase64(in));
+
 		return new String(original);
 	}
+
 }

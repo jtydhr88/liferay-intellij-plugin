@@ -21,10 +21,9 @@
 
 package com.liferay.ide.idea.errorreport;
 
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.diagnostic.Attachment;
+import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.SystemInfo;
 
 import java.util.LinkedHashMap;
@@ -35,10 +34,9 @@ import java.util.LinkedHashMap;
  * @author patrick
  */
 class IdeaInformationProxy {
-	static LinkedHashMap<String, String> getKeyValuePairs(GitHubErrorBean error,
-														  Application application,
-														  ApplicationInfoEx appInfo,
-														  ApplicationNamesInfo namesInfo) {
+
+	static LinkedHashMap<String, String> _getKeyValuePairs(GitHubErrorBean error, ApplicationInfoEx appInfo) {
+
 		LinkedHashMap<String, String> params = new LinkedHashMap<>();
 
 		params.put("error.description", error.getDescription());
@@ -48,17 +46,23 @@ class IdeaInformationProxy {
 		params.put("Java version", SystemInfo.JAVA_VERSION);
 		params.put("Java vm vendor", SystemInfo.JAVA_VENDOR);
 		params.put("App Version name", appInfo.getVersionName());
-		params.put("App Build", appInfo.getBuild().asString());
+
+		BuildNumber buildNumber = appInfo.getBuild();
+
+		params.put("App Build", buildNumber.asString());
+
 		params.put("App Version", appInfo.getFullVersion());
 		params.put("Last Action", error.getLastAction());
 		params.put("error.message", error.getMessage());
 		params.put("error.stacktrace", error.getStackTrace());
-		params.put("error.hash", error.getExceptionHash());
+		params.put("error.hash", error._getExceptionHash());
 
 		for (Attachment attachment : error.getAttachments()) {
 			params.put("attachment.name", attachment.getName());
 			params.put("attachment.value", attachment.getEncodedBytes());
 		}
+
 		return params;
 	}
+
 }
