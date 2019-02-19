@@ -172,29 +172,31 @@ public class LiferayWorkspaceUtil {
 
 			Collection<DataNode<?>> dataNodes = projectData.getChildren();
 
-			List<LibraryData> libraryData = new ArrayList<>(dataNodes.size());
+			List<LibraryData> dataList = new ArrayList<>(dataNodes.size());
 
 			for (DataNode<?> child : dataNodes) {
 				if (!ProjectKeys.LIBRARY.equals(child.getKey())) {
 					continue;
 				}
 
-				libraryData.add((LibraryData)child.getData());
+				LibraryData libraryData = (LibraryData) child.getData();
+
+				if (libraryData.getArtifactId() == null || libraryData.getGroupId() == null) {
+					continue;
+				}
+
+				dataList.add(libraryData);
 			}
 
-			libraryData.sort(
+			dataList.sort(
 				(o1, o2) -> {
 					String artifactId1 = o1.getArtifactId();
 					String artifactId2 = o2.getArtifactId();
 
-					if ((artifactId1 == null) || (artifactId2 == null)) {
-						return 0;
-					}
-
 					return artifactId1.compareToIgnoreCase(artifactId2);
 				});
 
-			return libraryData;
+			return dataList;
 		}
 
 		return Collections.emptyList();
