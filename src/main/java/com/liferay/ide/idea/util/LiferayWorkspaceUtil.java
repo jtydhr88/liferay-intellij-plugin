@@ -179,9 +179,9 @@ public class LiferayWorkspaceUtil {
 					continue;
 				}
 
-				LibraryData libraryData = (LibraryData) child.getData();
+				LibraryData libraryData = (LibraryData)child.getData();
 
-				if (libraryData.getArtifactId() == null || libraryData.getGroupId() == null) {
+				if ((libraryData.getArtifactId() == null) || (libraryData.getGroupId() == null)) {
 					continue;
 				}
 
