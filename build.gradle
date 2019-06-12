@@ -173,6 +173,7 @@ formatSource {
 
 intellij {
 	plugins "CSS", "DatabaseTools", "gradle", "Groovy", "java-i18n", "JavaEE", "JavaScriptLanguage", "jsp", "junit", "maven", "PersistenceSupport", "properties", "sass"
+	pluginName "liferay-intellij-plugin"
 	version "IU-2018.3.4"
 }
 
@@ -214,4 +215,4 @@ verifyBlade {
 	checksum bladeLatestMD5
 }
 
-version = "1.5.0"
+version = "1.5.1"
