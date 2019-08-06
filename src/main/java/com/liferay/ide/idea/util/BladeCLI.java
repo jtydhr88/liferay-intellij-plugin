@@ -22,6 +22,8 @@ import java.io.PrintStream;
 import java.net.JarURLConnection;
 import java.net.URL;
 
+import java.nio.file.Path;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
@@ -125,6 +127,20 @@ public class BladeCLI {
 		}
 
 		return lines.toArray(new String[0]);
+	}
+
+	public static synchronized Path getBladeCLIPath() {
+		Properties properties = System.getProperties();
+
+		File temp = new File(properties.getProperty("user.home"), ".liferay-intellij-plugin");
+
+		File bladeJar = new File(temp, "blade.jar");
+
+		if (bladeJar.exists()) {
+			return bladeJar.toPath();
+		}
+
+		return null;
 	}
 
 	public static synchronized String[] getProjectTemplates() {
