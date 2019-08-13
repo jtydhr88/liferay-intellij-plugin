@@ -19,11 +19,10 @@ import static com.intellij.openapi.util.text.StringUtil.tokenize;
 import static com.intellij.openapi.util.text.StringUtil.trimEnd;
 import static com.intellij.openapi.util.text.StringUtil.trimStart;
 
-import com.intellij.openapi.externalSystem.model.project.LibraryData;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.ContainerUtil;
 
-import com.liferay.ide.idea.util.LiferayWorkspaceUtil;
+import com.liferay.ide.idea.util.LiferayWorkspaceSupport;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -32,8 +31,9 @@ import org.jetbrains.idea.maven.model.MavenArtifactInfo;
 
 /**
  * @author Charles Wu
+ * @author Terry Jia
  */
-public class LiferayArtifactSearcher extends Searcher<LiferayArtifactSearchResult> {
+public class LiferayArtifactSearcher extends Searcher<LiferayArtifactSearchResult> implements LiferayWorkspaceSupport {
 
 	@Override
 	protected List<LiferayArtifactSearchResult> searchImpl(Project project, String pattern, int maxResult) {
@@ -46,23 +46,33 @@ public class LiferayArtifactSearcher extends Searcher<LiferayArtifactSearchResul
 		List<LiferayArtifactSearchResult> searchResults = ContainerUtil.newSmartList();
 		int count = 0;
 
-		for (LibraryData libraryData : LiferayWorkspaceUtil.getTargetPlatformArtifacts(project)) {
+		List<String> dependencies = getTargetPlatformDependencies(project);
+
+		for (String dependency : dependencies) {
 			if (count >= maxResult) {
 				break;
 			}
 
+			int i1 = dependency.indexOf(":");
+			int i2 = dependency.indexOf(" ");
+
+			if ((i1 < 0) || (i2 < 0)) {
+				continue;
+			}
+
+			String groupId = dependency.substring(0, i1);
+			String artifactId = dependency.substring(i1 + 1, i2);
+			String version = dependency.substring(i2 + 1);
+
 			//matched getGroupId id
 
-			if (parts.isEmpty() || contains(libraryData.getGroupId(), parts.get(0))) {
+			if (parts.isEmpty() || contains(groupId, parts.get(0))) {
 				//matched artifact id
 
-				if ((parts.size() < 2) || contains(libraryData.getArtifactId(), parts.get(1))) {
+				if ((parts.size() < 2) || contains(artifactId, parts.get(1))) {
 					LiferayArtifactSearchResult searchResult = new LiferayArtifactSearchResult();
 
-					searchResult.versions.add(
-						new MavenArtifactInfo(
-							libraryData.getGroupId(), libraryData.getArtifactId(), libraryData.getVersion(), "jar",
-							null));
+					searchResult.versions.add(new MavenArtifactInfo(groupId, artifactId, version, "jar", null));
 
 					searchResults.add(searchResult);
 

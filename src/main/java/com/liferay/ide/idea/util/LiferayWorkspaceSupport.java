@@ -65,40 +65,6 @@ import org.jetbrains.plugins.gradle.util.GradleConstants;
  */
 public interface LiferayWorkspaceSupport {
 
-	public static List<LibraryData> getTargetPlatformArtifacts(Project project) {
-		ProjectDataManager projectDataManager = ProjectDataManager.getInstance();
-
-		Collection<ExternalProjectInfo> externalProjectInfos = projectDataManager.getExternalProjectsData(
-			project, GradleConstants.SYSTEM_ID);
-
-		for (ExternalProjectInfo externalProjectInfo : externalProjectInfos) {
-			DataNode<ProjectData> projectData = externalProjectInfo.getExternalProjectStructure();
-
-			if (projectData == null) {
-				continue;
-			}
-
-			Collection<DataNode<?>> dataNodes = projectData.getChildren();
-
-			List<LibraryData> libraryData = new ArrayList<>(dataNodes.size());
-
-			for (DataNode<?> child : dataNodes) {
-				if (!ProjectKeys.LIBRARY.equals(child.getKey())) {
-					continue;
-				}
-
-				libraryData.add((LibraryData)child.getData());
-			}
-
-			libraryData.sort(
-				Comparator.comparing(LibraryData::getArtifactId, Comparator.nullsFirst(String.CASE_INSENSITIVE_ORDER)));
-
-			return libraryData;
-		}
-
-		return Collections.emptyList();
-	}
-
 	@Nullable
 	public static VirtualFile getWorkspaceVirtualFile(@Nullable Project project) {
 		if (project == null) {
@@ -318,6 +284,40 @@ public interface LiferayWorkspaceSupport {
 		LocalFileSystem localFileSystem = LocalFileSystem.getInstance();
 
 		return localFileSystem.findFileByPath(file.getPath());
+	}
+
+	public default List<LibraryData> getTargetPlatformArtifacts(Project project) {
+		ProjectDataManager projectDataManager = ProjectDataManager.getInstance();
+
+		Collection<ExternalProjectInfo> externalProjectInfos = projectDataManager.getExternalProjectsData(
+			project, GradleConstants.SYSTEM_ID);
+
+		for (ExternalProjectInfo externalProjectInfo : externalProjectInfos) {
+			DataNode<ProjectData> projectData = externalProjectInfo.getExternalProjectStructure();
+
+			if (projectData == null) {
+				continue;
+			}
+
+			Collection<DataNode<?>> dataNodes = projectData.getChildren();
+
+			List<LibraryData> libraryData = new ArrayList<>(dataNodes.size());
+
+			for (DataNode<?> child : dataNodes) {
+				if (!ProjectKeys.LIBRARY.equals(child.getKey())) {
+					continue;
+				}
+
+				libraryData.add((LibraryData)child.getData());
+			}
+
+			libraryData.sort(
+				Comparator.comparing(LibraryData::getArtifactId, Comparator.nullsFirst(String.CASE_INSENSITIVE_ORDER)));
+
+			return libraryData;
+		}
+
+		return Collections.emptyList();
 	}
 
 	public default List<String> getTargetPlatformDependencies(Project project) {

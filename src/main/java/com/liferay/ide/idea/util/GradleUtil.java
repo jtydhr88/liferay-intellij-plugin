@@ -71,7 +71,13 @@ public class GradleUtil {
 					StringBuilder stringBuilder = new StringBuilder();
 
 					for (String dependency : dependencies) {
-						stringBuilder.append(String.format("compileOnly '%s'\n", dependency));
+						String[] infos = dependency.split(":");
+
+						if (infos.length >= 2) {
+							String s = "compileOnly group: \"" + infos[0] + "\", name: \"" + infos[1] + "\"";
+
+							stringBuilder.append(s);
+						}
 					}
 
 					dependenciesBlock = (GrCall)groovyPsiElementFactory.createStatementFromText(
@@ -85,10 +91,14 @@ public class GradleUtil {
 
 					if (grClosableBlock != null) {
 						for (String dependency : dependencies) {
-							grClosableBlock.addStatementBefore(
-								groovyPsiElementFactory.createStatementFromText(
-									String.format("compileOnly '%s'\n", dependency)),
-								null);
+							String[] infos = dependency.split(":");
+
+							if (infos.length >= 2) {
+								String s = "compileOnly group: \"" + infos[0] + "\", name: \"" + infos[1] + "\"";
+
+								grClosableBlock.addStatementBefore(
+									groovyPsiElementFactory.createStatementFromText(s), null);
+							}
 						}
 					}
 				}
