@@ -12,7 +12,7 @@
  * details.
  */
 
-package com.liferay.ide.idea.language.lsp;
+package com.liferay.ide.idea.languageserver;
 
 import com.intellij.openapi.application.PreloadingActivity;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -28,13 +28,13 @@ import org.wso2.lsp4intellij.IntellijLanguageClient;
 /**
  * @author Dominik Marks
  */
-public class BladeLanguageServerPreloadingActivity extends PreloadingActivity {
+public class LiferayLanguageServerPreloadingActivity extends PreloadingActivity {
 
 	@Override
 	public void preload(@NotNull ProgressIndicator progressIndicator) {
 		Properties properties = System.getProperties();
 
-		File temp = new File(properties.getProperty("user.home"), ".liferay-ide");
+		File temp = new File(properties.getProperty("user.home"), ".liferay-intellij-plugin");
 
 		File bladeJar = new File(temp, "blade.jar");
 

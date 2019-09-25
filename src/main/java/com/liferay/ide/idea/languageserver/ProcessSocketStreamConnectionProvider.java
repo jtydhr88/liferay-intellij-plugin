@@ -12,7 +12,7 @@
  * details.
  */
 
-package com.liferay.ide.idea.language.lsp;
+package com.liferay.ide.idea.languageserver;
 
 import java.io.IOException;
 import java.io.InputStream;
