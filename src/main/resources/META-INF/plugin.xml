@@ -206,6 +206,7 @@
 		<inspectionToolProvider implementation="com.liferay.ide.idea.language.service.LiferayServiceXMLInspectionToolProvider"/>
 		<preloadingActivity implementation="com.liferay.ide.idea.languageserver.LiferayLanguageServerPreloadingActivity" id="com.liferay.ide.idea.languageserver.LiferayLanguageServerPreloadingActivity" />
 		<completion.contributor implementationClass="org.wso2.lsp4intellij.contributors.LSPCompletionContributor" id="LSPCompletionContributor" language="any"/>
+		<externalAnnotator id="LSPAnnotator" language="Properties" implementationClass="org.wso2.lsp4intellij.contributors.annotator.LSPAnnotator"/>
 	</extensions>
 
 	<application-components>
