@@ -17,6 +17,8 @@ package com.liferay.ide.idea.languageserver;
 import com.intellij.openapi.application.PreloadingActivity;
 import com.intellij.openapi.progress.ProgressIndicator;
 
+import com.liferay.ide.idea.util.SocketSupport;
+
 import java.io.File;
 
 import java.util.Properties;
@@ -27,8 +29,9 @@ import org.wso2.lsp4intellij.IntellijLanguageClient;
 
 /**
  * @author Dominik Marks
+ * @author Terry Jia
  */
-public class LiferayLanguageServerPreloadingActivity extends PreloadingActivity {
+public class LiferayLanguageServerPreloadingActivity extends PreloadingActivity implements SocketSupport {
 
 	@Override
 	public void preload(@NotNull ProgressIndicator progressIndicator) {
@@ -39,10 +42,11 @@ public class LiferayLanguageServerPreloadingActivity extends PreloadingActivity 
 		File bladeJar = new File(temp, "blade.jar");
 
 		if (bladeJar.exists()) {
-			IntellijLanguageClient.addServerDefinition(
-				new SocketCommandServerDefinition(
-					"properties",
-					new String[] {"java", "-jar", bladeJar.getAbsolutePath(), "languageServer", "-p", "12345"}, 12345));
+			int port = findUnusedPort(10000, 60000);
+
+			String[] args = {"java", "-jar", bladeJar.getAbsolutePath(), "languageServer", "-p", String.valueOf(port)};
+
+			IntellijLanguageClient.addServerDefinition(new SocketCommandServerDefinition("properties", args, port));
 		}
 	}
 
