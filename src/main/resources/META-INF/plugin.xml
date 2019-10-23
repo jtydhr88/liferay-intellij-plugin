@@ -37,6 +37,7 @@
 				<li>INTELLIJ-79 add project template support version validation</li>
 				<li>INTELLIJ-81 remove requirement for index.source when creating modules ext project</li>
 				<li>INTELLIJ-82 update taglib code completions for Liferay 7.1/7.2(community contribution)</li>
+				<li>INTELLIJ-87 need to upgrade Intellij plugin dev java verstion to JDK 11</li>
 				<li>Updated embedded blade cli to 3.8.0</li>
 			</ul>
 			<li>1.5.1</li>
