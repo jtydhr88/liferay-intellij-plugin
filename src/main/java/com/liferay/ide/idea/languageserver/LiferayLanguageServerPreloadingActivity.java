@@ -35,11 +35,21 @@ public class LiferayLanguageServerPreloadingActivity extends PreloadingActivity 
 
 	@Override
 	public void preload(@NotNull ProgressIndicator progressIndicator) {
-		int port = findUnusedPort(10000, 60000);
+		Properties properties = System.getProperties();
 
-		String[] args = {"java", "-DliferayLanguageServerPort=" + port, "-jar", "~/.liferay-ide/liferay-properties-server-all.jar"};
+		File temp = new File(properties.getProperty("user.home"), ".liferay-intellij-plugin");
 
-		IntellijLanguageClient.addServerDefinition(new SocketCommandServerDefinition("properties", args, port));
+		File liferayPropertiesServerJar = new File(temp, "liferay-properties-server-all.jar");
+
+		if (liferayPropertiesServerJar.exists()) {
+			int port = findUnusedPort(10000, 60000);
+
+			String[] args = {
+				"java", "-DliferayLanguageServerPort=" + port, "-jar", liferayPropertiesServerJar.getAbsolutePath()
+			};
+
+			IntellijLanguageClient.addServerDefinition(new SocketCommandServerDefinition("properties", args, port));
+		}
 	}
 
 }
