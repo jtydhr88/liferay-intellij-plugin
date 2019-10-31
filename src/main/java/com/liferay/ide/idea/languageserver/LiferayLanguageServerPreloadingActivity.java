@@ -26,6 +26,7 @@ import java.util.Properties;
 import org.jetbrains.annotations.NotNull;
 
 import org.wso2.lsp4intellij.IntellijLanguageClient;
+import org.wso2.lsp4intellij.client.languageserver.serverdefinition.RawCommandServerDefinition;
 
 /**
  * @author Dominik Marks
@@ -48,7 +49,9 @@ public class LiferayLanguageServerPreloadingActivity extends PreloadingActivity 
 				"java", "-DliferayLanguageServerPort=" + port, "-jar", liferayPropertiesServerJar.getAbsolutePath()
 			};
 
-			IntellijLanguageClient.addServerDefinition(new SocketCommandServerDefinition("properties", args, port));
+			RawCommandServerDefinition rawCommandServerDefinition = new RawCommandServerDefinition("properties", args);
+
+			IntellijLanguageClient.addServerDefinition(rawCommandServerDefinition);
 		}
 	}
 
