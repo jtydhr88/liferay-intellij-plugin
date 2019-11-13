@@ -43,10 +43,8 @@ public class LiferayLanguageServerPreloadingActivity extends PreloadingActivity 
 		File liferayPropertiesServerJar = new File(temp, "liferay-properties-server-all.jar");
 
 		if (liferayPropertiesServerJar.exists()) {
-			int port = findUnusedPort(10000, 60000);
-
 			String[] args = {
-				"java", "-DliferayLanguageServerPort=" + port, "-jar", liferayPropertiesServerJar.getAbsolutePath()
+				"java", "-DliferayLanguageServerStandardIO=true", "-jar", liferayPropertiesServerJar.getAbsolutePath()
 			};
 
 			RawCommandServerDefinition rawCommandServerDefinition = new RawCommandServerDefinition("properties", args);
