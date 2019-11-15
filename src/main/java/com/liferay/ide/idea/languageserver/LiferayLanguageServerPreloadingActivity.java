@@ -17,11 +17,23 @@ package com.liferay.ide.idea.languageserver;
 import com.intellij.openapi.application.PreloadingActivity;
 import com.intellij.openapi.progress.ProgressIndicator;
 
+import com.liferay.ide.idea.util.FileUtil;
 import com.liferay.ide.idea.util.SocketSupport;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+
+import java.net.JarURLConnection;
+import java.net.URL;
+
+import java.nio.file.Files;
+import java.nio.file.Paths;
 
 import java.util.Properties;
+import java.util.jar.JarEntry;
+import java.util.regex.Pattern;
+import java.util.stream.Stream;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -36,21 +48,90 @@ public class LiferayLanguageServerPreloadingActivity extends PreloadingActivity 
 
 	@Override
 	public void preload(@NotNull ProgressIndicator progressIndicator) {
+		String[] args = {
+			_computeJavaPath(), "-DliferayLanguageServerStandardIO=true", "-jar",
+			_computeLiferayPropertiesServerJarPath()
+		};
+
+		RawCommandServerDefinition rawCommandServerDefinition = new RawCommandServerDefinition("properties", args);
+
+		IntellijLanguageClient.addServerDefinition(rawCommandServerDefinition);
+	}
+
+	private static String _computeJavaPath() {
+		String javaPath = "java";
+
+		String paths = System.getenv("PATH");
+
+		boolean existsInPath = Stream.of(
+			paths.split(Pattern.quote(File.pathSeparator))
+		).map(
+			Paths::get
+		).anyMatch(
+			path -> Files.exists(path.resolve("java"))
+		);
+
+		if (!existsInPath) {
+			String javaHome = System.getProperty("java.home");
+
+			File file = new File(javaHome, "bin/java" + (_isWindows() ? ".exe" : ""));
+
+			javaPath = file.getAbsolutePath();
+		}
+
+		return javaPath;
+	}
+
+	private static String _computeLiferayPropertiesServerJarPath() {
 		Properties properties = System.getProperties();
 
 		File temp = new File(properties.getProperty("user.home"), ".liferay-intellij-plugin");
 
-		File liferayPropertiesServerJar = new File(temp, "liferay-properties-server-all.jar");
+		File liferayPropertiesServerJar = new File(temp, _PROPERTIES_LSP_JAR_FILE_NAME);
 
-		if (liferayPropertiesServerJar.exists()) {
-			String[] args = {
-				"java", "-DliferayLanguageServerStandardIO=true", "-jar", liferayPropertiesServerJar.getAbsolutePath()
-			};
+		boolean needToCopy = true;
 
-			RawCommandServerDefinition rawCommandServerDefinition = new RawCommandServerDefinition("properties", args);
+		ClassLoader classLoader = LiferayLanguageServerPreloadingActivity.class.getClassLoader();
 
-			IntellijLanguageClient.addServerDefinition(rawCommandServerDefinition);
+		URL url = classLoader.getResource("/libs/" + _PROPERTIES_LSP_JAR_FILE_NAME);
+
+		try (InputStream in = classLoader.getResourceAsStream("/libs/" + _PROPERTIES_LSP_JAR_FILE_NAME)) {
+			JarURLConnection jarURLConnection = (JarURLConnection)url.openConnection();
+
+			JarEntry jarEntry = jarURLConnection.getJarEntry();
+
+			Long bladeJarTimestamp = jarEntry.getTime();
+
+			if (liferayPropertiesServerJar.exists()) {
+				Long destTimestamp = liferayPropertiesServerJar.lastModified();
+
+				if (destTimestamp < bladeJarTimestamp) {
+					liferayPropertiesServerJar.delete();
+				}
+				else {
+					needToCopy = false;
+				}
+			}
+
+			if (needToCopy) {
+				FileUtil.writeFile(liferayPropertiesServerJar, in);
+				liferayPropertiesServerJar.setLastModified(bladeJarTimestamp);
+			}
 		}
+		catch (IOException ioe) {
+		}
+
+		return liferayPropertiesServerJar.getAbsolutePath();
 	}
+
+	private static boolean _isWindows() {
+		String osName = System.getProperty("os.name");
+
+		osName = osName.toLowerCase();
+
+		return osName.contains("windows");
+	}
+
+	private static final String _PROPERTIES_LSP_JAR_FILE_NAME = "liferay-properties-server-all.jar";
 
 }
